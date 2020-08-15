@@ -8,6 +8,7 @@ import logging
 from botocore.exceptions import ClientError
 import boto3
 from elasticsearch import Elasticsearch
+import os
 
 # scraper config setup:
 root_folder = Path(Path.cwd())
@@ -82,73 +83,78 @@ createElasticMapping('page_post')
 for page_config in facebook_pages:
      existing_post_ids = set(page_config['post_ids']) #used to check if post data has already been scraped
      new_post_ids = set() #to be compared with existing_post_ids
+     try:
 
-     for post in get_posts(page_config['id'], pages=facebook_config['max_limit'], timeout=30):
-          #We want to check that each post has not been previously recorded
+          for post in get_posts(page_config['id'], pages=facebook_config['max_limit'], timeout=30):
+               #We want to check that each post has not been previously recorded
 
-          # ensuring that each post has a timestamp associated with it
-          try:
-               print(post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None)
-          except:
-               continue
+               # ensuring that each post has a timestamp associated with it
+               try:
+                    print(post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() + ' (' + post['post_id'] + ')' or None)
+               except:
+                    continue
 
-          #TODO: Add the first post ID we come across to the new_post_ids, later store in post_ids
-          #TODO: This way we can break when we come across the last post
-          #TODO: This approach will allow us to just scrape new posts 
-          #TODO: Scrape groups - Use date now as the time stamp once we're in synch
+               #TODO: Add the first post ID we come across to the new_post_ids, later store in post_ids
+               #TODO: This way we can break when we come across the last post
+               #TODO: This approach will allow us to just scrape new posts 
+               #TODO: Scrape groups - Use date now as the time stamp once we're in synch
 
-          #post id list for the current page
-          new_post_ids.add(post["post_id"])
+               #post id list for the current page
+               if len(new_post_ids) == 0:
+                    new_post_ids.add(post["post_id"])
 
-          #details to be added to the array of posts
-          fb_post = {
-               "post_id": post["post_id"],
-               "text": post['text'],
-               "post_text": post['post_text'],
-               "shared_text": post['shared_text'],
-               "timestamp": post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None,
-               "image": post['image'],
-               "video": post['video'],
-               "video_thumbnail":  post["video_thumbnail"],
-               "likes": post["likes"],
-               "comprehend": getComprehendAnalysis(post['text']),
-               "reactions": post.get('reactions') or None,
-               "group_id": page_config["id"],               
-               "group_name": page_config["name"],
-               "group_region": page_config["region"],
-               "group_city": page_config["city"],
-               "group_suburb": page_config["suburb"]
-          }        
-          facebook_page_posts.append(fb_post)
-          savePagePost(fb_post)
-          # Code for optimising periodic post id updates:
-          if post["post_id"] in existing_post_ids:
-               break
-     
-     current_facebook_page_config ={
-          "name": page_config["name"],
-          "id": page_config["id"],
-          "region": page_config["region"],
-          "city": page_config["city"],
-          "suburb": page_config["suburb"],
-          "posts": facebook_page_posts
-     }
-
-     #when all post ids have been added to new_post_ids set, we add the values to a dictionary
-     post_id_dict[page_config['id']] = list(existing_post_ids.union(new_post_ids))
-     
-     facebook_page_config_array.append(current_facebook_page_config) 
-
-     filename = str(page_config['id']) + '.json'
-     filename = filename.lower()
-     print(filename) #json filename for page data
-
-     #creating json file for current facebook page
-     with open(root_folder / 'facebook_scraper' / 'data' / filename, 'w') as outfile:
-          tmp_dictionary = {
-               "pages": current_facebook_page_config
+               #details to be added to the array of posts
+               fb_post = {
+                    "post_id": post["post_id"],
+                    "text": post['text'],
+                    "post_text": post['post_text'],
+                    "shared_text": post['shared_text'],
+                    "timestamp": post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None,
+                    "image": post['image'],
+                    "video": post['video'],
+                    "video_thumbnail":  post["video_thumbnail"],
+                    "likes": post["likes"],
+                    "comprehend": getComprehendAnalysis(post['text']),
+                    "reactions": post.get('reactions') or None,
+                    "group_id": page_config["id"],               
+                    "group_name": page_config["name"],
+                    "group_region": page_config["region"],
+                    "group_city": page_config["city"],
+                    "group_suburb": page_config["suburb"]
+               }        
+               facebook_page_posts.append(fb_post)
+               savePagePost(fb_post)
+               # Code for optimising periodic post id updates:
+               if post["post_id"] in existing_post_ids:
+                    break
+          
+          current_facebook_page_config ={
+               "name": page_config["name"],
+               "id": page_config["id"],
+               "region": page_config["region"],
+               "city": page_config["city"],
+               "suburb": page_config["suburb"],
+               "posts": facebook_page_posts
           }
-          json.dump(tmp_dictionary, outfile)
+
+          #when all post ids have been added to new_post_ids set, we add the values to a dictionary
+          post_id_dict[page_config['id']] = list(existing_post_ids.union(new_post_ids))
+          
+          facebook_page_config_array.append(current_facebook_page_config) 
+
+          filename = str(page_config['id']) + '.json'
+          filename = filename.lower()
+          print(filename) #json filename for page data
+
+          #creating json file for current facebook page
+          with open(root_folder / 'facebook_scraper' / 'data' / filename, 'w') as outfile:
+               tmp_dictionary = {
+                    "pages": current_facebook_page_config
+               }
+               json.dump(tmp_dictionary, outfile)
+               
+     except Exception as e:
+          print(e)
 
 #setting up dictionary with all page information, to be used for main json file
 facebook_dict_for_json = {
@@ -188,41 +194,30 @@ def upload_file(file_name, bucket, object_name=None):
     # Upload the file
     s3_client = boto3.client('s3')
     try:
-        response = s3_client.upload_file(file_name, bucket, object_name)
+        response = s3_client.upload_file(str(root_folder / 'facebook_scraper' / 'data' / file_name), bucket, object_name)
     except ClientError as e:
         logging.error(e)
         return False
     return True
 
-#upload_file("facebook_posts.json", "geoora")
-
-
-
-# Code to add groups to the program in the future:
-
-# for group in facebook_groups:
-#      for post in get_posts(group=group['id'], pages=1):
-#           #dt = post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat()
-
-#           fb_post = {
-#                "post_id": post["post_id"],
-#                "text": post['text'],
-#                "post_text": post['post_text'],
-#                "shared_text": post['shared_text'],
-#                #"timestamp": post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat(),
-#                "image": post['image'],
-#                "video": post['video'],
-#                "video_thumbnail":  post["video_thumbnail"],
-#                "likes": post["likes"] 
-#           }        
-
-#           facebook_posts.append(fb_post)
+def generateIndex():
+     file_array = []
+     s3_client = boto3.client('s3')
+     for key in s3_client.list_objects(Bucket='geoora')['Contents']:
+          file_array.append(key['Key'])
      
-#      facebook_group ={
-#           "name": group["name"],
-#           "id": group["id"],
-#           "region": group["region"],
-#           "city": group["city"],
-#           "suburb": group["suburb"],
-#           "posts": facebook_posts
-#      }
+     file_index = {
+          "file_index": file_array
+     }
+
+     #writing main page/post data json file
+     with open(root_folder / 'facebook_scraper' / 'data' / 'index.json', 'w') as outfile:
+          json.dump(file_index, outfile)
+     
+     upload_file('index.json', 'geoora')
+
+
+for filename in os.listdir(root_folder / 'facebook_scraper' / 'data'):
+     upload_file(filename, "geoora")
+
+generateIndex()
