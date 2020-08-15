@@ -30,13 +30,17 @@ for page in facebook_pages:
      for post in get_posts(page['id'], pages=10):
           #dt = post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat()
           #We want to check that each post has not been previously recorded
-          
+          try:
+               print(post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None)
+          except:
+               continue
+
           fb_post = {
                "post_id": post["post_id"],
                "text": post['text'],
                "post_text": post['post_text'],
                "shared_text": post['shared_text'],
-               "timestamp": post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat(),
+               "timestamp": post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None,
                "image": post['image'],
                "video": post['video'],
                "video_thumbnail":  post["video_thumbnail"],
@@ -88,7 +92,7 @@ facebook = {
      "group": facebook_page
 }
 
-with open(root_folder / 'facebook_posts.json', 'w') as outfile:
+with open(root_folder / 'facebook_scraper' / 'facebook_posts.json', 'w') as outfile:
      json.dump(facebook, outfile)
 
 print('Hello')
@@ -113,5 +117,5 @@ def upload_file(file_name, bucket, object_name=None):
         logging.error(e)
         return False
     return True
-    
-upload_file("facebook_posts.json", "geoora")
+
+#upload_file("facebook_posts.json", "geoora")
