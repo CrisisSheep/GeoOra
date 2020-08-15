@@ -26,13 +26,25 @@ facebook_groups = facebook_config['groups']
 facebook_posts = []
 tz = pytz.timezone("Pacific/Auckland")
 
+get_more_data = True
+page_counter = 1
+
+post_ids_dictionary = {}
 for page in facebook_pages:
-     for post in get_posts(page['id'], pages=10):
-          #dt = post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat()
+     existing_post_ids = set(page['post_ids'])
+     new_post_ids = set()
+     for post in get_posts(page['id'], pages=facebook_config['max_limit']):
+
           #We want to check that each post has not been previously recorded
           try:
                print(post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None)
           except:
+               continue
+          
+          new_post_ids.add(post["post_id"])
+
+          if post["post_id"] in existing_post_ids:
+               get_more_data = False
                continue
 
           fb_post = {
@@ -58,38 +70,52 @@ for page in facebook_pages:
           "posts": facebook_posts
      }
 
+     #when all post ids have been added to new_post_ids set, we add the values to a dictionary
+     post_ids_dictionary[page['id']] = list(new_post_ids)
 
-for group in facebook_groups:
-     for post in get_posts(group=group['id'], pages=10):
-          #dt = post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat()
+          
 
-          fb_post = {
-               "post_id": post["post_id"],
-               "text": post['text'],
-               "post_text": post['post_text'],
-               "shared_text": post['shared_text'],
-               #"timestamp": post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat(),
-               "image": post['image'],
-               "video": post['video'],
-               "video_thumbnail":  post["video_thumbnail"],
-               "likes": post["likes"] 
-          }        
+#when all the pages have been collected, we add every post id back into the config file..
 
-          facebook_posts.append(fb_post)
+for page in facebook_config['pages']:
+     if page['id'] in post_ids_dictionary:
+          page['post_ids'] = post_ids_dictionary[page['id']]
+
      
-     facebook_group ={
-          "name": group["name"],
-          "id": group["id"],
-          "region": group["region"],
-          "city": group["city"],
-          "suburb": group["suburb"],
-          "posts": facebook_posts
-     }
+with open(root_folder / 'facebook_scraper' / 'config.json', 'w') as outfile:
+     json.dump(config, outfile)
+
+# for group in facebook_groups:
+#      for post in get_posts(group=group['id'], pages=1):
+#           #dt = post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat()
+
+#           fb_post = {
+#                "post_id": post["post_id"],
+#                "text": post['text'],
+#                "post_text": post['post_text'],
+#                "shared_text": post['shared_text'],
+#                #"timestamp": post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat(),
+#                "image": post['image'],
+#                "video": post['video'],
+#                "video_thumbnail":  post["video_thumbnail"],
+#                "likes": post["likes"] 
+#           }        
+
+#           facebook_posts.append(fb_post)
+     
+#      facebook_group ={
+#           "name": group["name"],
+#           "id": group["id"],
+#           "region": group["region"],
+#           "city": group["city"],
+#           "suburb": group["suburb"],
+#           "posts": facebook_posts
+#      }
 
 
 facebook = {
-     "page": facebook_page,
-     "group": facebook_page
+     "page": facebook_page
+     #"group": facebook_page
 }
 
 with open(root_folder / 'facebook_scraper' / 'facebook_posts.json', 'w') as outfile:
