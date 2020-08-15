@@ -1,0 +1,59 @@
+{
+    "facebook": {
+        "group": [
+            {
+                "name": "",
+                "id": "433563157024477",
+                "region": "Parua Bay",
+                "city": "",
+                "suburb": "",
+                "posts": [
+                    {
+                        "post_id": "",
+                        "text": "",
+                        "post_text": "",
+                        "shared_text": "",
+                        "timestamp": "",
+                        "image": "",
+                        "video": "",
+                        "video_thumbnail": "",
+                        "likes": 1
+                    }
+                ]
+            }
+        ],
+        "page": [
+            {
+                "name": "",
+                "id": "433563157024477",
+                "region": "Parua Bay",
+                "city": "",
+                "suburb": "",
+                "posts": [
+                    {
+                        "post_id": "",
+                        "text": "",
+                        "post_text": "",
+                        "shared_text": "",
+                        "timestamp": "",
+                        "image": "",
+                        "video": "",
+                        "video_thumbnail": "",
+                        "likes": 1
+                    }
+                    {
+                        "post_id": "",
+                        "text": "",
+                        "post_text": "",
+                        "shared_text": "",
+                        "timestamp": "",
+                        "image": "",
+                        "video": "",
+                        "video_thumbnail": "",
+                        "likes": 1
+                    }
+                ]
+            }
+        ]
+    }
+}
