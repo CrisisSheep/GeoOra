@@ -72,7 +72,15 @@ for page in facebook_pages:
      #when all post ids have been added to new_post_ids set, we add the values to a dictionary
      post_ids_dictionary[page['id']] = list(existing_post_ids.union(new_post_ids))
 
-          
+     facebook = {
+          "page": facebook_page
+     }     
+     filename = str(page['id']) + '.json'
+     filename = filename.lower()
+     print(filename)
+
+     with open(root_folder / 'facebook_scraper' / 'data' / filename, 'w') as outfile:
+          json.dump(facebook, outfile)
 
 #when all the pages have been collected, we add every post id back into the config file..
 
@@ -112,13 +120,13 @@ with open(root_folder / 'facebook_scraper' / 'config.json', 'w') as outfile:
 #      }
 
 
-facebook = {
-     "page": facebook_page
-     #"group": facebook_page
-}
+# facebook = {
+#      "page": facebook_page
+#      #"group": facebook_page
+# }
 
-with open(root_folder / 'facebook_scraper' / 'facebook_posts.json', 'w') as outfile:
-     json.dump(facebook, outfile)
+# with open(root_folder / 'facebook_scraper' / 'facebook_posts.json', 'w') as outfile:
+#      json.dump(facebook, outfile)
 
 print('Hello')
 

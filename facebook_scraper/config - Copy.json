@@ -1,0 +1,72 @@
+{
+    "facebook": {
+        "max_limit": 2,
+        "groups": [
+            {
+                "name": "Parua Bay /Whangarei Heads community page",
+                "id": "433563157024477",
+                "region": "Northland",
+                "city": "Whangarei",
+                "suburb": "Whangarei Heads"
+            }
+        ],
+        "pages": [
+            {
+                "name": "MoreFM Northland PAGE",
+                "id": "91.6MoreFM",
+                "region": "Northland",
+                "city": null,
+                "suburb": null,
+                "post_ids":[]
+            },
+            {
+                "name": "whangareiloveithere",
+                "id": "whangareiloveithere",
+                "region": "Northland",
+                "city": null,
+                "suburb": null,
+                "post_ids":[]
+            },
+            {
+                "name": "WhangareiQuarryGardens",
+                "id": "WhangareiQuarryGardens",
+                "region": "Northland",
+                "city": null,
+                "suburb": null,
+                "post_ids":[]
+            },
+            {
+                "name": "thewhangareigrowersmarket",
+                "id": "thewhangareigrowersmarket",
+                "region": "Northland",
+                "city": null,
+                "suburb": null,
+                "post_ids":[]
+            },
+            {
+                "name": "mai4mayor",
+                "id": "mai4mayor",
+                "region": "Northland",
+                "city": null,
+                "suburb": null,
+                "post_ids":[]
+            },
+            {
+                "name": "FarNorthYouthCouncil",
+                "id": "FarNorthYouthCouncil",
+                "region": "Northland",
+                "city": null,
+                "suburb": null,
+                "post_ids":[]
+            },
+            {
+                "name": "WhangareiDC",
+                "id": "WhangareiDC",
+                "region": "Northland",
+                "city": null,
+                "suburb": null,
+                "post_ids":[]
+            }
+        ]
+    }
+}
