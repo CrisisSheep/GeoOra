@@ -11,39 +11,44 @@ from botocore.exceptions import ClientError
 # for post in get_posts(group="433563157024477"):
 #      print(post['time'])
 
-facebook = {}
-facebook_page_array = []
-facebook_page = []
 
+
+# scraper config setup:
 root_folder = Path(Path.cwd())
-
 with open(root_folder / 'facebook_scraper' / 'config.json', 'r') as f:
     config = json.load(f)
-
 facebook_config = config['facebook']
 facebook_pages = facebook_config['pages']
-facebook_groups = facebook_config['groups']
 
-facebook_posts = []
+
+#facebook_groups = facebook_config['groups']
+facebook_dict_for_json = {} 
+facebook_page_config_array = []
+current_facebook_page_config = []
+facebook_page_posts = []
+
+
 tz = pytz.timezone("Pacific/Auckland")
 
-get_more_data = True
-page_counter = 1
+post_id_dict = {}
 
-post_ids_dictionary = {}
-for page in facebook_pages:
-     existing_post_ids = set(page['post_ids'])
-     new_post_ids = set()
-     for post in get_posts(page['id'], pages=facebook_config['max_limit']):
+for page_config in facebook_pages:
+     existing_post_ids = set(page_config['post_ids']) #used to check if post data has already been scraped
+     new_post_ids = set() #to be compared with existing_post_ids
 
+     for post in get_posts(page_config['id'], pages=facebook_config['max_limit']):
           #We want to check that each post has not been previously recorded
+
+          # ensuring that each post has a timestamp associated with it
           try:
                print(post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None)
           except:
                continue
           
+          #post id list for the current page
           new_post_ids.add(post["post_id"])
 
+          #details to be added to the array of posts
           fb_post = {
                "post_id": post["post_id"],
                "text": post['text'],
@@ -55,56 +60,60 @@ for page in facebook_pages:
                "video_thumbnail":  post["video_thumbnail"],
                "likes": post["likes"] 
           }        
+          facebook_page_posts.append(fb_post)
 
-          facebook_posts.append(fb_post)
-
-          if post["post_id"] in existing_post_ids:
-               get_more_data = False
+          # Code for optimising periodic post id updates:
+          #if post["post_id"] in existing_post_ids:
+          #     get_more_data = False
      
-     facebook_page ={
-          "name": page["name"],
-          "id": page["id"],
-          "region": page["region"],
-          "city": page["city"],
-          "suburb": page["suburb"],
-          "posts": facebook_posts
+     current_facebook_page_config ={
+          "name": page_config["name"],
+          "id": page_config["id"],
+          "region": page_config["region"],
+          "city": page_config["city"],
+          "suburb": page_config["suburb"],
+          "posts": facebook_page_posts
      }
 
      #when all post ids have been added to new_post_ids set, we add the values to a dictionary
-     post_ids_dictionary[page['id']] = list(existing_post_ids.union(new_post_ids))
-  
-     facebook_page_array.append(facebook_page) 
+     post_id_dict[page_config['id']] = list(existing_post_ids.union(new_post_ids))
+     
+     facebook_page_config_array.append(current_facebook_page_config) 
 
-     filename = str(page['id']) + '.json'
+     filename = str(page_config['id']) + '.json'
      filename = filename.lower()
-     print(filename)
+     print(filename) #json filename for page data
 
+     #creating json file for current facebook page
      with open(root_folder / 'facebook_scraper' / 'data' / filename, 'w') as outfile:
           tmp_dictionary = {
-               "pages": facebook_page
+               "pages": current_facebook_page_config
           }
           json.dump(tmp_dictionary, outfile)
 
-facebook = {
+#setting up dictionary with all page information, to be used for main json file
+facebook_dict_for_json = {
      "facebook": {
-          "pages": facebook_page_array
+          "pages": facebook_page_config_array
      }
 }
 
 #when all the pages have been collected, we add every post id back into the config file..
 
-for page in facebook_config['pages']:
-     if page['id'] in post_ids_dictionary:
-          page['post_ids'] = post_ids_dictionary[page['id']]
+#updating config
+for page_config in facebook_config['pages']:
+     if page_config['id'] in post_id_dict:
+          page_config['post_ids'] = post_id_dict[page_config['id']]
 
-     
+#writing new config details to config json file     
 with open(root_folder / 'facebook_scraper' / 'config.json', 'w') as outfile:
      json.dump(config, outfile)
 
+#writing main page/post data json file
 with open(root_folder / 'facebook_scraper' / 'facebook_posts.json', 'w') as outfile:
-     json.dump(facebook, outfile)
+     json.dump(facebook_dict_for_json, outfile)
 
-print('Hello')
+print('Scraping finished.')
 
 #CODE FOR UPLOADING FILE TO S3 BUCKET
 def upload_file(file_name, bucket, object_name=None):
@@ -128,6 +137,9 @@ def upload_file(file_name, bucket, object_name=None):
 
 #upload_file("facebook_posts.json", "geoora")
 
+
+
+# Code to add groups to the program in the future:
 
 # for group in facebook_groups:
 #      for post in get_posts(group=group['id'], pages=1):
