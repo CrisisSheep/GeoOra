@@ -7,7 +7,10 @@
                 "id": "433563157024477",
                 "region": "Northland",
                 "city": "Whangarei",
-                "suburb": "Whangarei Heads"
+                "suburb": "Whangarei Heads",
+                "post_ids": [
+                    
+                ]
             }
         ],
         "pages": [
@@ -17,55 +20,9 @@
                 "region": "Northland",
                 "city": null,
                 "suburb": null,
-                "post_ids": []
-            },
-            {
-                "name": "whangareiloveithere",
-                "id": "whangareiloveithere",
-                "region": "Northland",
-                "city": null,
-                "suburb": null,
-                "post_ids": []
-            },
-            {
-                "name": "WhangareiQuarryGardens",
-                "id": "WhangareiQuarryGardens",
-                "region": "Northland",
-                "city": null,
-                "suburb": null,
-                "post_ids": []
-            },
-            {
-                "name": "thewhangareigrowersmarket",
-                "id": "thewhangareigrowersmarket",
-                "region": "Northland",
-                "city": null,
-                "suburb": null,
-                "post_ids": []
-            },
-            {
-                "name": "mai4mayor",
-                "id": "mai4mayor",
-                "region": "Northland",
-                "city": null,
-                "suburb": null,
-                "post_ids": []
-            },
-            {
-                "name": "FarNorthYouthCouncil",
-                "id": "FarNorthYouthCouncil",
-                "region": "Northland",
-                "city": null,
-                "suburb": null,
-                "post_ids": []
-            },
-            {
-                "name": "WhangareiDC",
-                "id": "WhangareiDC",
-                "region": "Northland",
-                "city": null,
-                "suburb": null,
-                "post_ids": []
+                "post_ids": [
+                    
+                ]
             }
         ]
     }
