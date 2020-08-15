@@ -22,13 +22,11 @@ with open(root_folder / 'facebook_scraper' / 'credentials.json', 'r') as f:
 facebook_config = config['facebook']
 facebook_pages = facebook_config['pages']
 
-
 #facebook_groups = facebook_config['groups']
 facebook_dict_for_json = {} 
 facebook_page_config_array = []
 current_facebook_page_config = []
 facebook_page_posts = []
-
 
 #comprehend init
 comprehend = boto3.client(service_name='comprehend', region_name='ap-southeast-2')
@@ -85,7 +83,7 @@ for page_config in facebook_pages:
      existing_post_ids = set(page_config['post_ids']) #used to check if post data has already been scraped
      new_post_ids = set() #to be compared with existing_post_ids
 
-     for post in get_posts(page_config['id'], pages=facebook_config['max_limit']):
+     for post in get_posts(page_config['id'], pages=facebook_config['max_limit'], timeout=30):
           #We want to check that each post has not been previously recorded
 
           # ensuring that each post has a timestamp associated with it
@@ -93,11 +91,14 @@ for page_config in facebook_pages:
                print(post.get('time').astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat() or None)
           except:
                continue
-          
+
+          #TODO: Add the first post ID we come across to the new_post_ids, later store in post_ids
+          #TODO: This way we can break when we come across the last post
+          #TODO: This approach will allow us to just scrape new posts 
+          #TODO: Scrape groups - Use date now as the time stamp once we're in synch
+
           #post id list for the current page
           new_post_ids.add(post["post_id"])
-
-
 
           #details to be added to the array of posts
           fb_post = {
@@ -111,6 +112,7 @@ for page_config in facebook_pages:
                "video_thumbnail":  post["video_thumbnail"],
                "likes": post["likes"],
                "comprehend": getComprehendAnalysis(post['text']),
+               "reactions": post.get('reactions') or None,
                "group_id": page_config["id"],               
                "group_name": page_config["name"],
                "group_region": page_config["region"],
