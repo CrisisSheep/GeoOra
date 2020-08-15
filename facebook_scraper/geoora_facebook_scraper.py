@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 from botocore.exceptions import ClientError
 import boto3
-from elasticsearch import Elasticsearch
+#from elasticsearch import Elasticsearch
 import os
 
 # scraper config setup:
@@ -37,7 +37,7 @@ facebook_group_posts = []
 comprehend = boto3.client(service_name='comprehend', region_name='ap-southeast-2')
 
 #Elasticsearch init
-elastic = Elasticsearch(hosts=[credentials['elastic.url']], http_auth=(credentials['elastic.user'], credentials['elastic.password']), request_timeout=30)
+#elastic = Elasticsearch(hosts=[credentials['elastic.url']], http_auth=(credentials['elastic.user'], credentials['elastic.password']), request_timeout=30)
 
 tz = pytz.timezone("Pacific/Auckland")
 date_now_local = datetime.now(tz)
@@ -83,7 +83,7 @@ def createElasticMapping(index):
 def savePagePost(post):
     result = elastic.index(index='facebook_post', body=post, id=post['post_id'])
 
-createElasticMapping('page_post')
+#createElasticMapping('page_post')
 
 for page_config in facebook_pages:
      existing_post_ids = set(page_config['post_ids']) #used to check if post data has already been scraped
@@ -123,7 +123,7 @@ for page_config in facebook_pages:
                     "group_suburb": page_config["suburb"]
                }        
                facebook_page_posts.append(fb_post)
-               savePagePost(fb_post)
+               #savePagePost(fb_post)
                # Code for optimising periodic post id updates:
                if post["post_id"] in existing_post_ids:
                     break
@@ -206,7 +206,7 @@ for group_config in facebook_groups:
                     "group_suburb": group_config["suburb"]
                }        
                facebook_group_posts.append(fb_post)
-               savePagePost(fb_post)
+               #savePagePost(fb_post)
                # Code for optimising periodic post id updates:
                if post["post_id"] in existing_post_ids:
                     break
