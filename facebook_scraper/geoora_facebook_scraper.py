@@ -1,12 +1,12 @@
 from facebook_scraper import get_posts
 import json
 from pathlib import Path
-from datetime import datetime
 import pytz
 import time
 from datetime import datetime
 import logging
 from botocore.exceptions import ClientError
+
 
 # for post in get_posts(group="433563157024477"):
 #      print(post['time'])
@@ -16,16 +16,18 @@ facebook_page = []
 
 root_folder = Path(Path.cwd())
 
-with open(root_folder / 'config.json', 'r') as f:
+with open(root_folder / 'facebook_scraper' / 'config.json', 'r') as f:
     config = json.load(f)
 
 facebook_config = config['facebook']
+facebook_pages = facebook_config['pages']
+facebook_groups = facebook_config['groups']
 
 facebook_posts = []
 tz = pytz.timezone("Pacific/Auckland")
 
 for page in facebook_pages:
-     for post in get_posts(page['id'], pages=1):
+     for post in get_posts(page['id'], pages=10):
           #dt = post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat()
           #We want to check that each post has not been previously recorded
           
@@ -54,7 +56,7 @@ for page in facebook_pages:
 
 
 for group in facebook_groups:
-     for post in get_posts(group=group['id'], pages=1):
+     for post in get_posts(group=group['id'], pages=10):
           #dt = post['time'].astimezone(pytz.timezone('Pacific/Auckland')).replace(microsecond=0).isoformat()
 
           fb_post = {
@@ -111,4 +113,5 @@ def upload_file(file_name, bucket, object_name=None):
         logging.error(e)
         return False
     return True
+    
 upload_file("facebook_posts.json", "geoora")
