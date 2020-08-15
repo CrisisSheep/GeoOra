@@ -6,17 +6,19 @@ import time
 from datetime import datetime
 import logging
 from botocore.exceptions import ClientError
-
-
-# for post in get_posts(group="433563157024477"):
-#      print(post['time'])
-
-
+import boto3
+from elasticsearch import Elasticsearch
 
 # scraper config setup:
 root_folder = Path(Path.cwd())
+mapping_folder = Path(Path.cwd() / 'facebook_scraper' / 'mapping/')
+
 with open(root_folder / 'facebook_scraper' / 'config.json', 'r') as f:
     config = json.load(f)
+
+with open(root_folder / 'facebook_scraper' / 'credentials.json', 'r') as f:
+    credentials = json.load(f)
+
 facebook_config = config['facebook']
 facebook_pages = facebook_config['pages']
 
@@ -28,9 +30,56 @@ current_facebook_page_config = []
 facebook_page_posts = []
 
 
+#comprehend init
+comprehend = boto3.client(service_name='comprehend', region_name='ap-southeast-2')
+
+#Elasticsearch init
+elastic = Elasticsearch(hosts=[credentials['elastic.url']], http_auth=(credentials['elastic.user'], credentials['elastic.password']), request_timeout=30)
+
 tz = pytz.timezone("Pacific/Auckland")
 
 post_id_dict = {}
+
+def getComprehendAnalysis(text):
+     if type(text) == str and len(text) > 5 and len(text) < 5000:
+          result = comprehend.detect_sentiment(Text=text, LanguageCode='en')
+          if result['ResponseMetadata']['HTTPStatusCode'] == 200:
+               return {
+                    "Sentiment": result['Sentiment'],
+                    "SentimentScore": result['SentimentScore']
+               }
+          else:
+               return None
+     else:
+          return None
+
+def createElasticMapping(index):
+     if not elastic.indices.exists(index):
+          with open(mapping_folder / 'page_post.json', 'r') as f:
+               mapping = json.load(f)
+
+          # create an index with the mapping passed to the 'body' parameter
+          response = elastic.indices.create(
+               index=index,
+               body=mapping,
+               ignore=400
+          )
+          # print out the response:
+          print ('response:', response)
+
+          if 'acknowledged' in response:
+               if response['acknowledged'] == True:
+                    print ("INDEX MAPPING SUCCESS FOR INDEX:", response['index'])
+
+          # catch API error response
+          elif 'error' in response:
+               print ("ERROR:", response['error']['root_cause'])
+               print ("TYPE:", response['error']['type'])
+
+def savePagePost(post):
+    result = elastic.index(index='facebook_post', body=post, id=post['post_id'])
+
+createElasticMapping('page_post')
 
 for page_config in facebook_pages:
      existing_post_ids = set(page_config['post_ids']) #used to check if post data has already been scraped
@@ -48,6 +97,8 @@ for page_config in facebook_pages:
           #post id list for the current page
           new_post_ids.add(post["post_id"])
 
+
+
           #details to be added to the array of posts
           fb_post = {
                "post_id": post["post_id"],
@@ -58,13 +109,19 @@ for page_config in facebook_pages:
                "image": post['image'],
                "video": post['video'],
                "video_thumbnail":  post["video_thumbnail"],
-               "likes": post["likes"] 
+               "likes": post["likes"],
+               "comprehend": getComprehendAnalysis(post['text']),
+               "group_id": page_config["id"],               
+               "group_name": page_config["name"],
+               "group_region": page_config["region"],
+               "group_city": page_config["city"],
+               "group_suburb": page_config["suburb"]
           }        
           facebook_page_posts.append(fb_post)
-
+          savePagePost(fb_post)
           # Code for optimising periodic post id updates:
-          #if post["post_id"] in existing_post_ids:
-          #     get_more_data = False
+          if post["post_id"] in existing_post_ids:
+               break
      
      current_facebook_page_config ={
           "name": page_config["name"],
