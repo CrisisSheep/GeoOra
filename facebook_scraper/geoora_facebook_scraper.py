@@ -43,10 +43,6 @@ for page in facebook_pages:
           
           new_post_ids.add(post["post_id"])
 
-          if post["post_id"] in existing_post_ids:
-               get_more_data = False
-               continue
-
           fb_post = {
                "post_id": post["post_id"],
                "text": post['text'],
@@ -60,6 +56,9 @@ for page in facebook_pages:
           }        
 
           facebook_posts.append(fb_post)
+
+          if post["post_id"] in existing_post_ids:
+               get_more_data = False
      
      facebook_page ={
           "name": page["name"],
@@ -71,7 +70,7 @@ for page in facebook_pages:
      }
 
      #when all post ids have been added to new_post_ids set, we add the values to a dictionary
-     post_ids_dictionary[page['id']] = list(new_post_ids)
+     post_ids_dictionary[page['id']] = list(existing_post_ids.union(new_post_ids))
 
           
 
